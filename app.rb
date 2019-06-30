@@ -1,35 +1,34 @@
 class App
+
+  HEADERS = { 'Contetnt-Type' => 'text/plain' }
+
   def call(env)
     @request = Rack::Request.new(env)
-    @format = TimeFormat.new(@request.params["format"].split(','))
-    [status, headers, body]
+
+    case @request.path_info
+    when "/time"
+      time_response
+    else
+      not_found_response
+    end
   end
 
   private
 
-  def status
-    @format.wrong_format? ? 400 : wrong_status? ? 200 : 404
-  end
+  def time_response
+    @format = TimeFormat.new(@request.params["format"].split(','))
+    response = @format.call
 
-  def headers
-    { 'Contetnt-Type' => 'text/plain' }
-  end
-
-  def body
-    a = []
-
-    case status
-    when 200
-      a << "#{@format.call}\n"
-    when 400
-      a << "Unknown time format #{@format.wrong_format}\n"
-    when 404
-      a << "Unknown route [#{@request.path_info}]\n"
+    if response
+      status, body = 200, ["#{response}\n"]
+    else
+      status, body = 400, ["Unknown time format #{@format.wrong_format}\n"]
     end
 
+    Rack::Response.new(body, status, HEADERS).finish
   end
 
-  def wrong_status?
-    @request.path_info == "/time"
+  def not_found_response
+    [404, HEADERS, ["Unknown route [#{@request.path_info}]\n"]]
   end
 end

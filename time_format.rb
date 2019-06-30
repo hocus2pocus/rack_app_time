@@ -15,11 +15,11 @@ class TimeFormat
     @time_format = time_format
     @wrong_format = []
     @correct_format = []
-    check_format
   end
 
   def call
-    @correct_format.map { |v| Time.now.strftime(VALID_FORMATS[v]) }.join("-")
+    check_format
+    result if valid?
   end
 
   def check_format
@@ -28,7 +28,11 @@ class TimeFormat
     end
   end
 
-  def wrong_format?
-    @wrong_format.any?
+  def result
+    Time.now.strftime(@correct_format.map { |v| VALID_FORMATS[v] }.join("-"))
+  end
+
+  def valid?
+    @wrong_format.empty?
   end
 end
